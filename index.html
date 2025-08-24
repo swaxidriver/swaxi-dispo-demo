@@ -46,6 +46,62 @@
   <div id="root"></div>
 
   <script type="text/babel">
+    // === BEGIN ADDON: BulkApplyBar ===
+    function BulkApplyBar({ selectedIds, onApply, onClear }) {
+      if (!selectedIds.length) return null;
+      return (
+        <div className="fixed bottom-0 left-0 right-0 bg-blue-50 dark:bg-zinc-800 border-t border-blue-200 dark:border-zinc-700 p-3 flex items-center justify-between z-50">
+          <span className="font-semibold">Für {selectedIds.length} Tage bewerben</span>
+          <div className="flex gap-2">
+            <button className="btn-primary px-4 py-2 rounded" onClick={onApply}>Bewerben</button>
+            <button className="btn-outline px-4 py-2 rounded" onClick={onClear}>Abbrechen</button>
+          </div>
+        </div>
+      );
+    }
+    // === END ADDON: BulkApplyBar ===
+
+    // === BEGIN ADDON: AuditTab ===
+    function AuditTab({ logs }) {
+      return (
+        <div className="p-4">
+          <h2 className="font-bold mb-2">Audit-Log</h2>
+          <ul className="space-y-2">
+            {logs.map((log,i)=>(
+              <li key={i} className="border rounded p-2 text-xs">
+                <div><b>{log.time}</b> · <b>{log.role}</b> · {log.action}</div>
+                <div>ID(s): {log.ids}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+    // === END ADDON: AuditTab ===
+
+    // === BEGIN ADDON: ThemeToggle ===
+    function ThemeToggle({ theme, setTheme }) {
+      return (
+        <button onClick={()=>setTheme(t=>t==="light"?"dark":"light")} className="rounded-xl px-3 py-2 btn-outline text-xs" title="Dark Mode umschalten">{theme==="dark"?"🌙":"☀️"}</button>
+      );
+    }
+    // === END ADDON: ThemeToggle ===
+
+    // === BEGIN ADDON: AutoAssignModal ===
+    function AutoAssignModal({ open, onClose }) {
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 max-w-md w-full shadow-xl relative" tabIndex={-1}>
+            <h2 className="text-lg font-bold mb-2">Automatisch zuteilen</h2>
+            <div className="mb-4">Ich schmeiß wieder alles durcheinander 😅 (Demo)</div>
+            <button className="btn-primary rounded-xl px-4 py-2" onClick={onClose} autoFocus>Schließen</button>
+          </div>
+        </div>
+      );
+    }
+    // === END ADDON: AutoAssignModal ===
+
     // === BEGIN ADDON: Tooltip ===
     function Tooltip({ children, text, id }) {
       const [show, setShow] = React.useState(false);
@@ -218,6 +274,81 @@
       );
     }
     // === END ADDON: MiniAnalytics ===
+
+    // === BEGIN ADDON: CalendarView ===
+    function CalendarView({ services, bids, onSelectDay }) {
+      const [month, setMonth] = React.useState(() => {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      });
+      const [selected, setSelected] = React.useState(null);
+      const d = new Date(month+'-01');
+      const year = d.getFullYear();
+      const mon = d.getMonth();
+      const firstDay = new Date(year, mon, 1);
+      const startDay = firstDay.getDay();
+      const daysInMonth = new Date(year, mon+1, 0).getDate();
+      const grid = [];
+      let dayNum = 1 - startDay;
+      for(let w=0;w<6;w++){
+        const week=[];
+        for(let d=0;d<7;d++){
+          const date = new Date(year, mon, dayNum);
+          const iso = date.toISOString().slice(0,10);
+          const inMonth = date.getMonth()===mon;
+          const unbesetzt = services.some(s=>s.datum===iso && s.status==="Offen");
+          week.push({iso, inMonth, unbesetzt, day:date.getDate()});
+          dayNum++;
+        }
+        grid.push(week);
+      }
+      return (
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <button onClick={()=>setMonth(prev=>{
+              const [y,m]=prev.split('-').map(Number);
+              const d=new Date(y,m-2,1);
+              return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0');
+            })}>&lt;</button>
+            <span className="font-bold">{d.toLocaleString('de',{month:'long',year:'numeric'})}</span>
+            <button onClick={()=>setMonth(prev=>{
+              const [y,m]=prev.split('-').map(Number);
+              const d=new Date(y,m,1);
+              return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0');
+            })}>&gt;</button>
+          </div>
+          <div className="grid grid-cols-7 gap-1 mb-2 text-xs text-center">
+            {['Mo','Di','Mi','Do','Fr','Sa','So'].map(wd=><div key={wd}>{wd}</div>)}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {grid.flat().map((cell,i)=>(
+              <button key={i} className={`aspect-square rounded text-xs ${cell.inMonth?"bg-white dark:bg-zinc-900":"bg-gray-100 dark:bg-zinc-800 text-gray-400"} border relative`} onClick={()=>setSelected(cell.iso)}>
+                {cell.day}
+                {cell.unbesetzt && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" title="Unbesetzt"></span>}
+              </button>
+            ))}
+          </div>
+          {selected && (
+            <div className="fixed inset-0 bg-black/30 z-40 flex items-end justify-end" onClick={()=>setSelected(null)}>
+              <div className="bg-white dark:bg-zinc-900 rounded-t-2xl p-6 w-full max-w-md shadow-xl" onClick={e=>e.stopPropagation()}>
+                <h3 className="font-bold mb-2">{selected}</h3>
+                <ul className="mb-2">
+                  {services.filter(s=>s.datum===selected).map(s=>(
+                    <li key={s.id} className="mb-1 flex items-center gap-2">
+                      <Badge color={s.status==="Offen"?"red":s.status==="Zugewiesen"?"blue":"gray"}>{s.status}</Badge>
+                      {s.schichtart} {s.beginn}-{s.ende}
+                      {s.status==="Offen" && <button className="btn-primary px-2 py-1 rounded" onClick={()=>onSelectDay && onSelectDay(s.id)}>Besetzen/Bewerben</button>}
+                    </li>
+                  ))}
+                </ul>
+                <button className="btn-outline px-4 py-2 rounded" onClick={()=>setSelected(null)}>Schließen</button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+    // === END ADDON: CalendarView ===
 
     // Constants
     const STATUS={ OFFEN:"Offen", ZUGEWIESEN:"Zugewiesen", ABGESAGT:"Abgesagt" };
@@ -701,11 +832,13 @@
           )}
 
           <nav className="bottom-nav flex sm:hidden justify-around py-2">
+            {/* === BEGIN ADDON: CalendarView Tab-Auswahl === */}
             {["buchen","kalender","konflikte","postfach"].map(t=> (
               <button key={t} onClick={()=>setTab(t)} className={"px-3 py-1.5 "+(tab===t? "btn-primary text-white rounded-xl":"")}>
                 {t.charAt(0).toUpperCase()+t.slice(1)}
               </button>
             ))}
+            {/* === END ADDON: CalendarView Tab-Auswahl === */}
           </nav>
 
           {/* v5.3 Footer mit Version, Ersteller, Erstelldatum, Changelog-Button */}
