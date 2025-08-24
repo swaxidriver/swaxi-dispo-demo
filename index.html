@@ -131,7 +131,7 @@
         const reason=prompt("Grund der Absage (optional):","")||"";
         setServices(p=>p.map(s=>s.id===serviceId?{...s,status:"Abgesagt",cancelReason:reason}:s));
         bufferChange("cancel",{service:svc,reason});
-        pushToast("Dienst abgesagt", `${fmtDate(svc.datum)} ${svc.beginn}–${svc.ende}${reason and " · "+reason or ""}`);
+        pushToast("Dienst abgesagt", `${fmtDate(svc.datum)} ${svc.beginn}–${svc.ende}${reason ? " · " + reason : ""}`);
       }
       function generateServices(days=10){
         const out=[]; const start=new Date();
