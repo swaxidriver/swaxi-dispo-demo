@@ -102,35 +102,7 @@
     }
     // === END ADDON: AutoAssignModal ===
 
-    // === BEGIN ADDON: Tooltip ===
-    function Tooltip({ children, text, id }) {
-      const [show, setShow] = React.useState(false);
-      const ref = React.useRef();
-      return (
-        <span className="relative"
-          onMouseEnter={()=>setShow(true)}
-          onMouseLeave={()=>setShow(false)}
-          onFocus={()=>setShow(true)}
-          onBlur={()=>setShow(false)}
-          tabIndex={0}
-          aria-describedby={id}
-          ref={ref}
-        >
-          {children}
-          {show && (
-            <div
-              id={id}
-              role="tooltip"
-              className="absolute z-50 left-1/2 -translate-x-1/2 mt-2 px-2 py-1 rounded bg-gray-800 text-white text-xs shadow"
-              style={{whiteSpace:'nowrap'}}
-            >
-              {text}
-            </div>
-          )}
-        </span>
-      );
-    }
-    // === END ADDON: Tooltip ===
+  // ...existing code...
 
     // v5.3
     const APP_VERSION = "v5.3";
