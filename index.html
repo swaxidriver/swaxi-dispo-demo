@@ -74,6 +74,28 @@
       );
     }
     // === END ADDON: LiveUpdateBanner ===
+
+    // === BEGIN ADDON: ChangelogModal ===
+    function ChangelogModal({ open, onClose, changelog }) {
+      React.useEffect(() => {
+        if (!open) return;
+        function handleKey(e) { if (e.key === "Escape") onClose(); }
+        window.addEventListener("keydown", handleKey);
+        return () => window.removeEventListener("keydown", handleKey);
+      }, [open, onClose]);
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Changelog">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 max-w-md w-full shadow-xl relative" tabIndex={-1}>
+            <h2 className="text-lg font-bold mb-2">Changelog</h2>
+            <pre className="text-sm whitespace-pre-wrap mb-4" aria-live="polite">{changelog}</pre>
+            <button className="btn-primary rounded-xl px-4 py-2" onClick={onClose} autoFocus>Schließen</button>
+          </div>
+        </div>
+      );
+    }
+    // === END ADDON: ChangelogModal ===
+
     const CHANGELOG = "- Dark-Mode-Support (umschaltbar)\n- Live-Update-Banner bei neuer Version\n- Mini-Analytics mit 4 Kacheln\n- Changelog-Modal und Footer-Infos\n- Diverse UI-Verbesserungen";
     // ...existing code...
     const { useState, useMemo, useEffect, useCallback } = React;
@@ -120,8 +142,9 @@
     // Main App component
     function App(){
   // v5.3 Dark Mode State
-  // v5.3 Changelog Modal
+  // === BEGIN ADDON: ChangelogModal ===
   const [showChangelog, setShowChangelog] = useState(false);
+  // === END ADDON: ChangelogModal ===
       const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
       useEffect(() => {
         document.documentElement.setAttribute("data-theme", theme);
@@ -628,6 +651,9 @@
             </div>
             <div className="mt-1">CD: Primär #222F88 · Akzent #27ADE7. Logo eingebettet.</div>
           </footer>
+          {/* === BEGIN ADDON: ChangelogModal === */}
+          <ChangelogModal open={showChangelog} onClose={()=>setShowChangelog(false)} changelog={CHANGELOG}/>
+          {/* === END ADDON: ChangelogModal === */}
         </div>
       );
     }
